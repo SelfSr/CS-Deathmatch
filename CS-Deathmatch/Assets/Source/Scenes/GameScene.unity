@@ -148,7 +148,7 @@ GameObject:
   - component: {fileID: 503039853}
   - component: {fileID: 503039852}
   - component: {fileID: 503039851}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Plane
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -975,12 +975,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   player: {fileID: 6530687133190381031}
   playerRigidbody: {fileID: 6530687133190381029}
-  tiltSpeed: 2
-  tiltAmount: 5
+  tiltSpeed: 1
+  tiltAmount: 2
   headBobAmplitude: 1
   headBobFrequency: 10
-  breathingAmplitude: 0.1
-  breathingFrequency: 2
+  breathingAmplitude: 0.05
+  breathingFrequency: 1
   applyBreathingRotation: 1
 --- !u!82 &5602894440548691444
 AudioSource:
