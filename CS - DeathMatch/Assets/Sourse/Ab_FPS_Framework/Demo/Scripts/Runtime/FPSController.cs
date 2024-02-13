@@ -8,6 +8,8 @@ using Kinemation.FPSFramework.Runtime.Recoil;
 using UnityEngine;
 using System.Collections.Generic;
 using Random = UnityEngine.Random;
+using Unity.Burst.CompilerServices;
+using UnityEngine.Animations.Rigging;
 
 namespace Demo.Scripts.Runtime
 {
@@ -21,7 +23,7 @@ namespace Demo.Scripts.Runtime
             this.tabName = tabName;
         }
     }
-    
+
     public enum FPSAimState
     {
         None,
@@ -40,8 +42,8 @@ namespace Demo.Scripts.Runtime
     // An example-controller class
     public class FPSController : FPSAnimController
     {
-        [Tab("Animation")] 
-        [Header("General")] 
+        [Tab("Animation")]
+        [Header("General")]
         [SerializeField] private Animator animator;
 
         [Header("Turn In Place")]
@@ -49,10 +51,10 @@ namespace Demo.Scripts.Runtime
         [SerializeField] private AnimationCurve turnCurve = new AnimationCurve(new Keyframe(0f, 0f));
         [SerializeField] private float turnSpeed = 1f;
 
-        [Header("Leaning")] 
-        [SerializeField] private float smoothLeanStep = 1f;
-        [SerializeField, Range(0f, 1f)] private float startLean = 1f;
-        
+        //[Header("Leaning")]
+        //[SerializeField] private float smoothLeanStep = 1f;
+        //[SerializeField, Range(0f, 1f)] private float startLean = 1f;
+
         [Header("Dynamic Motions")]
         [SerializeField] private IKAnimation aimMotionAsset;
         [SerializeField] private IKAnimation leanMotionAsset;
@@ -61,20 +63,20 @@ namespace Demo.Scripts.Runtime
         [SerializeField] private IKAnimation onJumpMotionAsset;
         [SerializeField] private IKAnimation onLandedMotionAsset;
         [SerializeField] private IKAnimation onStartStopMoving;
-        
+
         [SerializeField] private IKPose sprintPose;
         [SerializeField] private IKPose pronePose;
 
         // Animation Layers
-        [SerializeField] [HideInInspector] private LookLayer lookLayer;
-        [SerializeField] [HideInInspector] private AdsLayer adsLayer;
-        [SerializeField] [HideInInspector] private SwayLayer swayLayer;
-        [SerializeField] [HideInInspector] private LocomotionLayer locoLayer;
-        [SerializeField] [HideInInspector] private SlotLayer slotLayer;
-        [SerializeField] [HideInInspector] private WeaponCollision collisionLayer;
+        [SerializeField][HideInInspector] private LookLayer lookLayer;
+        [SerializeField][HideInInspector] private AdsLayer adsLayer;
+        [SerializeField][HideInInspector] private SwayLayer swayLayer;
+        [SerializeField][HideInInspector] private LocomotionLayer locoLayer;
+        [SerializeField][HideInInspector] private SlotLayer slotLayer;
+        [SerializeField][HideInInspector] private WeaponCollision collisionLayer;
         // Animation Layers
-        
-        [Header("General")] 
+
+        [Header("General")]
         [Tab("Controller")]
         [SerializeField] private float timeScale = 1f;
         [SerializeField, Min(0f)] private float equipDelay = 0f;
@@ -85,26 +87,36 @@ namespace Demo.Scripts.Runtime
         [SerializeField] private Transform firstPersonCamera;
         [SerializeField] private float sensitivity;
         [SerializeField] private Vector2 freeLookAngle;
+        private Camera mainCameraComponent;
 
-        [Header("Movement")] 
+        [Header("Movement")]
         [SerializeField] private FPSMovement movementComponent;
-        
-        [SerializeField] [Tab("Weapon")] 
+
+        [SerializeField]
+        [Tab("Weapon")]
         private List<Weapon> weapons;
         private Vector2 _playerInput;
+
+        [Header("Shooting")]
+        [Tooltip("What objects should be hit")] public LayerMask hitLayer;
+        [SerializeField] private GameObject groundImpactParticle, enemyImpactParticle, grassImpactParticle, metalImpactParticle;
+        [SerializeField] private GameObject ImpactHole;
+        private AudioSource audioSource;
+        private float bulletDistance = 100;
+        private RaycastHit hit;
 
         // Used for free-look
         private Vector2 _freeLookInput;
 
         private int _currentWeaponIndex;
         private int _lastIndex;
-        
+
         private int _bursts;
         private bool _freeLook;
-        
+
         private FPSAimState aimState;
         private FPSActionState actionState;
-        
+
         private static readonly int Crouching = Animator.StringToHash("Crouching");
         private static readonly int OverlayType = Animator.StringToHash("OverlayType");
         private static readonly int TurnRight = Animator.StringToHash("TurnRight");
@@ -121,7 +133,10 @@ namespace Demo.Scripts.Runtime
         private void InitLayers()
         {
             InitAnimController();
-            
+
+            mainCameraComponent = mainCamera.GetComponent<Camera>();
+            audioSource = GetComponent<AudioSource>();
+
             animator = GetComponentInChildren<Animator>();
             lookLayer = GetComponentInChildren<LookLayer>();
             adsLayer = GetComponentInChildren<AdsLayer>();
@@ -194,7 +209,7 @@ namespace Demo.Scripts.Runtime
         public void RefreshStagedState()
         {
         }
-        
+
         public void ResetStagedState()
         {
         }
@@ -207,18 +222,18 @@ namespace Demo.Scripts.Runtime
             var gun = weapons[_currentWeaponIndex];
 
             _bursts = gun.burstAmount;
-            
+
             InitWeapon(gun);
             gun.gameObject.SetActive(true);
 
-            animator.SetFloat(OverlayType, (float) gun.overlayType);
+            animator.SetFloat(OverlayType, (float)gun.overlayType);
             actionState = FPSActionState.None;
         }
 
         private void EnableUnarmedState()
         {
             if (weapons.Count == 0) return;
-            
+
             weapons[_currentWeaponIndex].gameObject.SetActive(false);
             animator.SetFloat(OverlayType, 0);
         }
@@ -226,10 +241,10 @@ namespace Demo.Scripts.Runtime
         private void DisableAim()
         {
             if (!GetGun().canAim) return;
-            
+
             aimState = FPSAimState.None;
             OnInputAim(false);
-            
+
             adsLayer.SetAds(false);
             adsLayer.SetPointAim(false);
             swayLayer.SetFreeAimEnable(true);
@@ -239,14 +254,14 @@ namespace Demo.Scripts.Runtime
         public void ToggleAim()
         {
             if (!GetGun().canAim) return;
-            
+
             slotLayer.PlayMotion(aimMotionAsset);
-            
+
             if (!IsAiming())
             {
                 aimState = FPSAimState.Aiming;
                 OnInputAim(true);
-                
+
                 adsLayer.SetAds(true);
                 swayLayer.SetFreeAimEnable(false);
                 swayLayer.SetLayerAlpha(0.5f);
@@ -267,10 +282,42 @@ namespace Demo.Scripts.Runtime
         private void Fire()
         {
             if (HasActiveAction()) return;
-            
+
+            //if (resizeCrosshair && UIController.instance.crosshair != null)
+            //    UIController.instance.crosshair.Resize(weapon.crosshairResize * 100); изменение размера прицела
+
             GetGun().OnFire();
             PlayAnimation(GetGun().fireClip);
-            
+
+            Ray ray = mainCameraComponent.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0f));
+            Debug.DrawRay(ray.origin, ray.direction * 100, Color.red);
+
+
+            //Debug.Log(GetGun().weaponAsset.BodyDamage);
+            //Debug.Log(GetGun().weaponAsset.HeadDamage);
+            //Debug.Log(GetGun().weaponAsset.LimbsDamage);
+
+            Transform hitObj;
+
+            if (Physics.Raycast(ray, out hit, bulletDistance, hitLayer))
+            {
+                Hit(hit.collider.gameObject.layer, GetGun().weaponAsset.BodyDamage, hit, true);
+                hitObj = hit.collider.transform;
+
+                Ray newRay = new Ray(hit.point, ray.direction);
+                RaycastHit newHit;
+                Debug.DrawRay(newRay.origin, newRay.direction * GetGun().weaponAsset.distanceWallBane, Color.blue);
+
+                if (Physics.Raycast(newRay, out newHit, GetGun().weaponAsset.distanceWallBane, hitLayer))
+                {
+                    if (hitObj != newHit.collider.transform)
+                    {
+                        float dmg = GetGun().weaponAsset.BodyDamage / 2;
+                        Hit(newHit.collider.gameObject.layer, dmg, newHit, true);
+                    }
+                }
+            }
+
             PlayCameraShake(GetGun().cameraShake);
 
             if (GetGun().recoilPattern != null)
@@ -280,14 +327,14 @@ namespace Demo.Scripts.Runtime
                     GetGun().recoilPattern.horizontalVariation.y);
                 _controllerRecoil += new Vector2(hRecoil, _recoilStep) * aimRatio;
             }
-            
+
             if (recoilComponent == null || GetGun().weaponAsset.recoilData == null)
             {
                 return;
             }
-            
+
             recoilComponent.Play();
-            
+
             if (recoilComponent.fireMode == FireMode.Burst)
             {
                 if (_bursts == 0)
@@ -295,7 +342,7 @@ namespace Demo.Scripts.Runtime
                     OnFireReleased();
                     return;
                 }
-                
+
                 _bursts--;
             }
 
@@ -304,9 +351,66 @@ namespace Demo.Scripts.Runtime
                 _isFiring = false;
                 return;
             }
-            
+
             Invoke(nameof(Fire), 60f / GetGun().fireRate);
             _recoilStep += GetGun().recoilPattern.acceleration;
+        }
+
+        private void Hit(LayerMask layer, float damage, RaycastHit h, bool damageTarget)
+        {
+            GameObject impact = null, impactBullet = null;
+
+            switch (layer)
+            {
+                case int l when l == LayerMask.NameToLayer("Ground"):
+                    impact = Instantiate(groundImpactParticle, h.point, Quaternion.identity); // Metal
+                    impact.transform.rotation = Quaternion.LookRotation(h.normal);
+                    impactBullet = Instantiate(ImpactHole, h.point, Quaternion.identity);
+                    break;
+                case int l when l == LayerMask.NameToLayer("Grass"):
+                    impact = Instantiate(grassImpactParticle, h.point, Quaternion.identity); // Metal
+                    impact.transform.rotation = Quaternion.LookRotation(h.normal);
+                    break;
+                case int l when l == LayerMask.NameToLayer("Metal"):
+                    impact = Instantiate(metalImpactParticle, h.point, Quaternion.identity); // Metal
+                    impact.transform.rotation = Quaternion.LookRotation(h.normal);
+                    impactBullet = Instantiate(ImpactHole, h.point, Quaternion.identity);
+                    break;
+                case int l when l == LayerMask.NameToLayer("Enemy"):
+                    audioSource.Play();
+                    impact = Instantiate(enemyImpactParticle, h.point, Quaternion.identity); // Enemy
+                    impact.transform.rotation = Quaternion.LookRotation(h.normal);
+                    break;
+            }
+
+            if (h.collider != null && impactBullet != null)
+            {
+                impactBullet.transform.rotation = Quaternion.LookRotation(h.normal);
+                impactBullet.transform.SetParent(h.collider.transform);
+            }
+
+            if (!damageTarget)
+            {
+                return;
+            }
+
+            if (h.collider.gameObject.CompareTag("BotBodyShot"))
+            {
+                Debug.Log(damage);
+                //CowsinsUtilities.GatherDamageableParent(h.collider.transform).Damage(finalDamage * weapon.criticalDamageMultiplier);
+            }
+            if (h.collider.gameObject.CompareTag("BotHeadShot"))
+            {
+                Debug.Log(damage * GetGun().weaponAsset.headDamageMultiply);
+            }
+            if (h.collider.gameObject.CompareTag("BotLimbShot"))
+            {
+                Debug.Log(damage * GetGun().weaponAsset.limbDamageMultiply);
+            }
+            //else if (h.collider.GetComponent<IDamageable>() != null)
+            //{
+            //    h.collider.GetComponent<IDamageable>().Damage(finalDamage);
+            //}
         }
 
         private void OnFirePressed()
@@ -330,7 +434,7 @@ namespace Demo.Scripts.Runtime
             {
                 _recoilStep = GetGun().recoilPattern.step;
             }
-            
+
             _isFiring = true;
             Fire();
         }
@@ -338,7 +442,7 @@ namespace Demo.Scripts.Runtime
         private Weapon GetGun()
         {
             if (weapons.Count == 0) return null;
-            
+
             return weapons[_currentWeaponIndex];
         }
 
@@ -375,7 +479,7 @@ namespace Demo.Scripts.Runtime
             {
                 slotLayer.PlayMotion(onStartStopMoving);
             }
-            
+
             if (movementComponent.PoseState == FPSPoseState.Prone)
             {
                 locoLayer.BlendOutIkPose();
@@ -397,14 +501,14 @@ namespace Demo.Scripts.Runtime
         {
             OnFireReleased();
             DisableAim();
-            
+
             lookLayer.SetLayerAlpha(0.5f);
 
             if (GetGun().overlayType == Runtime.OverlayType.Rifle)
             {
                 locoLayer.BlendInIkPose(sprintPose);
             }
-            
+
             aimState = FPSAimState.None;
 
             if (recoilComponent != null)
@@ -425,7 +529,7 @@ namespace Demo.Scripts.Runtime
             lookLayer.SetPelvisWeight(0f);
             animator.SetBool(Crouching, true);
             slotLayer.PlayMotion(crouchMotionAsset);
-            
+
             GetAnimGraph().GetFirstPersonAnimator().SetFloat("MovementPlayRate", .7f);
         }
 
@@ -434,7 +538,7 @@ namespace Demo.Scripts.Runtime
             lookLayer.SetPelvisWeight(1f);
             animator.SetBool(Crouching, false);
             slotLayer.PlayMotion(unCrouchMotionAsset);
-            
+
             GetAnimGraph().GetFirstPersonAnimator().SetFloat("MovementPlayRate", 1f);
         }
 
@@ -455,9 +559,9 @@ namespace Demo.Scripts.Runtime
             var reloadClip = GetGun().reloadClip;
 
             if (reloadClip == null) return;
-            
+
             OnFireReleased();
-            
+
             PlayAnimation(reloadClip);
             GetGun().Reload();
             actionState = FPSActionState.Reloading;
@@ -467,7 +571,7 @@ namespace Demo.Scripts.Runtime
         {
             if (HasActiveAction()) return;
             if (GetGun().grenadeClip == null) return;
-            
+
             OnFireReleased();
             DisableAim();
             PlayAnimation(GetGun().grenadeClip);
@@ -475,17 +579,17 @@ namespace Demo.Scripts.Runtime
         }
 
         private bool _isLeaning;
-        
+
         private void ChangeWeapon_Internal(int newIndex)
         {
             if (newIndex == _currentWeaponIndex || newIndex > weapons.Count - 1)
             {
                 return;
             }
-            
+
             _lastIndex = _currentWeaponIndex;
             _currentWeaponIndex = newIndex;
-            
+
             OnFireReleased();
 
             UnequipWeapon();
@@ -496,18 +600,18 @@ namespace Demo.Scripts.Runtime
         {
             if (movementComponent.PoseState == FPSPoseState.Prone) return;
             if (HasActiveAction() || weapons.Count == 0) return;
-            
+
             if (Input.GetKeyDown(KeyCode.F))
             {
                 ChangeWeapon_Internal(_currentWeaponIndex + 1 > weapons.Count - 1 ? 0 : _currentWeaponIndex + 1);
                 return;
             }
-            
-            for (int i = (int) KeyCode.Alpha1; i <= (int) KeyCode.Alpha9; i++)
+
+            for (int i = (int)KeyCode.Alpha1; i <= (int)KeyCode.Alpha9; i++)
             {
-                if (Input.GetKeyDown((KeyCode) i))
+                if (Input.GetKeyDown((KeyCode)i))
                 {
-                    ChangeWeapon_Internal(i - (int) KeyCode.Alpha1);
+                    ChangeWeapon_Internal(i - (int)KeyCode.Alpha1);
                 }
             }
         }
@@ -518,39 +622,39 @@ namespace Demo.Scripts.Runtime
             {
                 return;
             }
-            
+
             if (Input.GetKeyDown(KeyCode.R))
             {
                 TryReload();
             }
 
-            if (Input.GetKeyDown(KeyCode.G))
-            {
-                TryGrenadeThrow();
-            }
+            //if (Input.GetKeyDown(KeyCode.G))
+            //{
+            //    TryGrenadeThrow();
+            //}
 
             HandleWeaponChangeInput();
-            
+
             if (aimState != FPSAimState.Ready)
             {
                 bool wasLeaning = _isLeaning;
-                
-                bool rightLean = Input.GetKey(KeyCode.E);
-                bool leftLean = Input.GetKey(KeyCode.Q);
 
-                _isLeaning = rightLean || leftLean;
-                
-                if (_isLeaning != wasLeaning)
-                {
-                    slotLayer.PlayMotion(leanMotionAsset);
-                    charAnimData.SetLeanInput(wasLeaning ? 0f : rightLean ? -startLean : startLean);
-                }
+                //bool rightLean = Input.GetKey(KeyCode.E);
+                //bool leftLean = Input.GetKey(KeyCode.Q);
 
-                if (_isLeaning)
-                {
-                    float leanValue = Input.GetAxis("Mouse ScrollWheel") * smoothLeanStep;
-                    charAnimData.AddLeanInput(leanValue);
-                }
+                //_isLeaning = rightLean || leftLean;
+
+                //if (_isLeaning != wasLeaning)
+                //{
+                //    slotLayer.PlayMotion(leanMotionAsset);
+                //    charAnimData.SetLeanInput(wasLeaning ? 0f : rightLean ? -startLean : startLean);
+                //}
+
+                //if (_isLeaning)
+                //{
+                //    float leanValue = Input.GetAxis("Mouse ScrollWheel") * smoothLeanStep;
+                //    charAnimData.AddLeanInput(leanValue);
+                //}
 
                 if (Input.GetKeyDown(KeyCode.Mouse0))
                 {
@@ -567,12 +671,12 @@ namespace Demo.Scripts.Runtime
                     ToggleAim();
                 }
 
-                if (Input.GetKeyDown(KeyCode.V))
-                {
-                    ChangeScope();
-                }
+                //if (Input.GetKeyDown(KeyCode.V))
+                //{
+                //    ChangeScope();
+                //}
 
-                if (Input.GetKeyDown(KeyCode.B) && IsAiming())
+                if (Input.GetKeyDown(KeyCode.Q) && IsAiming())
                 {
                     if (aimState == FPSAimState.PointAiming)
                     {
@@ -586,21 +690,21 @@ namespace Demo.Scripts.Runtime
                     }
                 }
             }
-            
-            if (Input.GetKeyDown(KeyCode.H))
-            {
-                if (aimState == FPSAimState.Ready)
-                {
-                    aimState = FPSAimState.None;
-                    lookLayer.SetLayerAlpha(1f);
-                }
-                else
-                {
-                    aimState = FPSAimState.Ready;
-                    lookLayer.SetLayerAlpha(.5f);
-                    OnFireReleased();
-                }
-            }
+
+            //if (Input.GetKeyDown(KeyCode.H))
+            //{
+            //    if (aimState == FPSAimState.Ready)
+            //    {
+            //        aimState = FPSAimState.None;
+            //        lookLayer.SetLayerAlpha(1f);
+            //    }
+            //    else
+            //    {
+            //        aimState = FPSAimState.Ready;
+            //        lookLayer.SetLayerAlpha(.5f);
+            //        OnFireReleased();
+            //    }
+            //}
         }
 
         private Quaternion desiredRotation;
@@ -620,29 +724,29 @@ namespace Demo.Scripts.Runtime
                 if (!isTurning)
                 {
                     turnProgress = 0f;
-                    
+
                     animator.ResetTrigger(TurnRight);
                     animator.ResetTrigger(TurnLeft);
-                    
+
                     animator.SetTrigger(sign > 0f ? TurnRight : TurnLeft);
                 }
-                
+
                 isTurning = true;
             }
 
             transform.rotation *= Quaternion.Euler(0f, turnInput, 0f);
-            
+
             float lastProgress = turnCurve.Evaluate(turnProgress);
             turnProgress += Time.deltaTime * turnSpeed;
             turnProgress = Mathf.Min(turnProgress, 1f);
-            
+
             float deltaProgress = turnCurve.Evaluate(turnProgress) - lastProgress;
 
             _playerInput.x -= sign * turnInPlaceAngle * deltaProgress;
-            
+
             transform.rotation *= Quaternion.Slerp(Quaternion.identity,
                 Quaternion.Euler(0f, sign * turnInPlaceAngle, 0f), deltaProgress);
-            
+
             if (Mathf.Approximately(turnProgress, 1f) && isTurning)
             {
                 isTurning = false;
@@ -657,29 +761,29 @@ namespace Demo.Scripts.Runtime
 
             float deltaMouseX = Input.GetAxis("Mouse X") * sensitivity;
             float deltaMouseY = -Input.GetAxis("Mouse Y") * sensitivity;
-            
-            if (_freeLook)
-            {
-                // No input for both controller and animation component. We only want to rotate the camera
 
-                _freeLookInput.x += deltaMouseX;
-                _freeLookInput.y += deltaMouseY;
+            //if (_freeLook)
+            //{
+            //    // No input for both controller and animation component. We only want to rotate the camera
 
-                _freeLookInput.x = Mathf.Clamp(_freeLookInput.x, -freeLookAngle.x, freeLookAngle.x);
-                _freeLookInput.y = Mathf.Clamp(_freeLookInput.y, -freeLookAngle.y, freeLookAngle.y);
+            //    _freeLookInput.x += deltaMouseX;
+            //    _freeLookInput.y += deltaMouseY;
 
-                return;
-            }
+            //    _freeLookInput.x = Mathf.Clamp(_freeLookInput.x, -freeLookAngle.x, freeLookAngle.x);
+            //    _freeLookInput.y = Mathf.Clamp(_freeLookInput.y, -freeLookAngle.y, freeLookAngle.y);
 
-            _freeLookInput = Vector2.Lerp(_freeLookInput, Vector2.zero, 
+            //    return;
+            //}
+
+            _freeLookInput = Vector2.Lerp(_freeLookInput, Vector2.zero,
                 FPSAnimLib.ExpDecayAlpha(15f, Time.deltaTime));
-            
+
             _playerInput.x += deltaMouseX;
             _playerInput.y += deltaMouseY;
-            
+
             float proneWeight = animator.GetFloat("ProneWeight");
             Vector2 pitchClamp = Vector2.Lerp(new Vector2(-90f, 90f), new Vector2(-30, 0f), proneWeight);
-            
+
             _playerInput.y = Mathf.Clamp(_playerInput.y, pitchClamp.x, pitchClamp.y);
             moveRotation *= Quaternion.Euler(0f, deltaMouseX, 0f);
             TurnInPlace();
@@ -707,7 +811,7 @@ namespace Demo.Scripts.Runtime
             {
                 return;
             }
-            
+
             float smoothing = 8f;
             float restoreSpeed = 8f;
             float cameraWeight = 0f;
@@ -718,12 +822,12 @@ namespace Demo.Scripts.Runtime
                 restoreSpeed = GetGun().recoilPattern.cameraRestoreSpeed;
                 cameraWeight = GetGun().recoilPattern.cameraWeight;
             }
-            
+
             _controllerRecoil = Vector2.Lerp(_controllerRecoil, Vector2.zero,
                 FPSAnimLib.ExpDecayAlpha(smoothing, Time.deltaTime));
 
             _playerInput += _controllerRecoil * Time.deltaTime;
-            
+
             Vector2 clamp = Vector2.Lerp(Vector2.zero, new Vector2(90f, 90f), cameraWeight);
             _cameraRecoilOffset -= _controllerRecoil * Time.deltaTime;
             _cameraRecoilOffset = Vector2.ClampMagnitude(_cameraRecoilOffset, clamp.magnitude);
@@ -748,12 +852,15 @@ namespace Demo.Scripts.Runtime
 
         private void Update()
         {
+            //Ray ray = mainCameraComponent.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0f));
+            //Debug.DrawRay(ray.origin, ray.direction * 100, Color.green);
+
             Time.timeScale = timeScale;
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 Application.Quit(0);
             }
-            
+
             UpdateActionInput();
             UpdateLookInput();
             UpdateRecoil();
@@ -761,12 +868,12 @@ namespace Demo.Scripts.Runtime
             charAnimData.moveInput = movementComponent.AnimatorVelocity;
             UpdateAnimController();
         }
-        
+
         public void UpdateCameraRotation()
         {
             Vector2 input = _playerInput;
             input += _cameraRecoilOffset;
-            
+
             (Quaternion, Vector3) cameraTransform =
                 (transform.rotation * Quaternion.Euler(input.y, input.x, 0f),
                     firstPersonCamera.position);

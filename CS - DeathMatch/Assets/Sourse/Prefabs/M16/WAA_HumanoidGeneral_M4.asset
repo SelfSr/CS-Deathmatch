@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rotationOffset: {x: 0, y: 0, z: 0, w: 1}
   aimOffsetTable: {fileID: 11400000, guid: 008dd63d16e235e4092cdc2989920e3b, type: 2}
-  recoilData: {fileID: 11400000, guid: 701f03450b087154cb4b65151dff9f83, type: 2}
+  recoilData: {fileID: 11400000, guid: d31f0444043a8084b895628294d31372, type: 2}
   overlayPose: {fileID: 11400000, guid: a07f2c65d7ebbef46a219bafb789c09c, type: 2}
   weaponBone:
     position: {x: 0.203, y: 1.25, z: 0.423}
@@ -41,7 +41,7 @@ MonoBehaviour:
       rotation: {x: 0, y: 0, z: 0, w: 1}
     rightHandOffset:
       position: {x: 0, y: -0.03, z: 0.03}
-      rotation: {x: 0.067567706, y: -0.017336937, z: 0.24791548, w: 0.96626705}
+      rotation: {x: 0.067567706, y: -0.017336944, z: 0.24791549, w: 0.96626705}
     leftHandOffset:
       position: {x: 0, y: 0, z: 0}
       rotation: {x: 0, y: 0, z: 0, w: 1}
@@ -127,11 +127,15 @@ MonoBehaviour:
     translationDampingFactor: 0
     rotationDampingFactor: 0
   blockData:
-    weaponLength: 0.7
-    startOffset: 0.15
+    weaponLength: 1.25
+    startOffset: 0.4
     threshold: 0.1
     restPose:
       position: {x: -0.05, y: -0.09, z: -0.03}
       rotation: {x: -0.22627231, y: 0.18844119, z: -0.091121025, w: -0.9513084}
   adsRecoilOffset: {x: 0, y: -0.05, z: -0.03}
   adsSwayOffset: {x: 0, y: -0.05, z: -0.3}
+  BodyDamage: 25
+  headDamageMultiply: 2
+  limbDamageMultiply: 0.5
+  distanceWallBane: 2

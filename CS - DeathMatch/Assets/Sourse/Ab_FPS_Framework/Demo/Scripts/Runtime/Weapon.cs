@@ -15,7 +15,7 @@ namespace Demo.Scripts.Runtime
         Pistol,
         Rifle
     }
-    
+    [RequireComponent(typeof(AudioSource))]
     public class Weapon : FPSAnimWeapon
     {
         [Header("Animations")]
@@ -23,21 +23,30 @@ namespace Demo.Scripts.Runtime
         public AnimSequence grenadeClip;
         public AnimSequence fireClip;
         public OverlayType overlayType;
-        
+
         [Header("Aiming")]
         public bool canAim = true;
         [SerializeField] private List<Transform> scopes;
-        
+
         [Header("Recoil")]
         public RecoilPattern recoilPattern;
         public FPSCameraShake cameraShake;
-        
+
+        [Header("ShotPlace")]
+        public Transform firePoint;
+        public GameObject bullet;
+        public AudioClip fire, reload;
+        private ParticleSystem shootEffect;
+
+        private AudioSource audioSource;
         private Animator _animator;
         private int _scopeIndex;
 
         protected void Start()
         {
             _animator = GetComponentInChildren<Animator>();
+            audioSource = GetComponent<AudioSource>();
+            shootEffect = GetComponentInChildren<ParticleSystem>(firePoint);
         }
 
         public override Transform GetAimPoint()
@@ -46,24 +55,31 @@ namespace Demo.Scripts.Runtime
             _scopeIndex = _scopeIndex > scopes.Count - 1 ? 0 : _scopeIndex;
             return scopes[_scopeIndex];
         }
-        
+
         public void OnFire()
         {
-            if (_animator == null)
-            {
+            if (_animator == null && audioSource == null)
                 return;
-            }
-            
+
+            shootEffect.Play();
+            // Получаем позицию и поворот ствола (FirePoint)
+            Vector3 firePointPosition = firePoint.position;
+            Quaternion firePointRotation = firePoint.rotation;
+
+            // Спауним эффект выстрела, используя firePointPosition и firePointRotation
+            Instantiate(bullet, firePointPosition, firePointRotation);
+
+            //Instantiate(bullet, firePoint.position, firePoint.rotation);
+            audioSource.PlayOneShot(fire);
             _animator.Play("Fire", 0, 0f);
         }
 
         public void Reload()
         {
-            if (_animator == null)
-            {
+            if (_animator == null && audioSource == null)
                 return;
-            }
-            
+
+            audioSource.PlayOneShot(reload);
             _animator.Rebind();
             _animator.Play("Reload", 0);
         }

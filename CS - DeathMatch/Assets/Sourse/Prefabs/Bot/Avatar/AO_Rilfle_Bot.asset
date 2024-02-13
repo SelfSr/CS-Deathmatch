@@ -10,27 +10,27 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: da3b626ae8ae5d84eaab7146ee6f43d0, type: 3}
-  m_Name: AO_Rilfle_Player
+  m_Name: AO_Rilfle_Bot
   m_EditorClassIdentifier: 
   aimOffsetUp:
-  - boneIndex: 0
-    angle: {x: 7, y: 23}
   - boneIndex: 1
-    angle: {x: 16.6, y: 13.4}
+    angle: {x: 7, y: 11}
   - boneIndex: 2
-    angle: {x: 16.6, y: 13.4}
+    angle: {x: 16.6, y: 15.8}
   - boneIndex: 3
-    angle: {x: 16.6, y: 13.4}
+    angle: {x: 16.6, y: 15.8}
+  - boneIndex: 4
+    angle: {x: 16.6, y: 15.8}
+  - boneIndex: 35
+    angle: {x: 16.6, y: 15.8}
   - boneIndex: 36
-    angle: {x: 16.6, y: 13.4}
-  - boneIndex: 37
-    angle: {x: 16.6, y: 13.4}
+    angle: {x: 16.6, y: 15.8}
   aimOffsetRight:
-  - boneIndex: 0
-    angle: {x: 20, y: 20}
   - boneIndex: 1
-    angle: {x: 23.333334, y: 23.333334}
+    angle: {x: 20, y: 20}
   - boneIndex: 2
     angle: {x: 23.333334, y: 23.333334}
   - boneIndex: 3
+    angle: {x: 23.333334, y: 23.333334}
+  - boneIndex: 4
     angle: {x: 23.333334, y: 23.333334}

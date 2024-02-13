@@ -38,6 +38,7 @@ namespace Demo.Scripts.Runtime
         public float airVelocity = 0f;
         public float maxFallVelocity = 0f;
         public float gravity = 9.81f;
+        public LayerMask ignoreCrouchLayers;
 
         [Header("Sliding")]
         public AnimationCurve slideCurve = AnimationCurve.Constant(0f, 1f, 0f);

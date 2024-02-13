@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4866b03a6252448db13225ec0b949cc9, type: 3}
   m_Name: MovementSettings
   m_EditorClassIdentifier: 
-  proneKey: 306
+  proneKey: 0
   crouchKey: 99
   sprintKey: 304
   jumpKey: 32
-  slideKey: 120
+  slideKey: 0
   idle:
     velocity: 0
     velocitySmoothing: 6.5
@@ -24,7 +24,7 @@ MonoBehaviour:
     velocity: 0.5
     velocitySmoothing: 2
   crouching:
-    velocity: 1.1
+    velocity: 2
     velocitySmoothing: 4
   walking:
     velocity: 3
@@ -35,9 +35,12 @@ MonoBehaviour:
   crouchRatio: 0.65
   jumpHeight: 4
   airFriction: 0.3
-  airVelocity: 0.4
+  airVelocity: 0.2
   maxFallVelocity: 25
   gravity: 10
+  ignoreCrouchLayers:
+    serializedVersion: 2
+    m_Bits: 4
   slideCurve:
     serializedVersion: 2
     m_Curve:

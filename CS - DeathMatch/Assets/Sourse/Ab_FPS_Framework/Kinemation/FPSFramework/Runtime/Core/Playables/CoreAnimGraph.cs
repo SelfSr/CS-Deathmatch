@@ -50,7 +50,7 @@ namespace Kinemation.FPSFramework.Runtime.Core.Playables
             }
             
             _animator = GetComponent<Animator>();
-            _playableGraph = _animator.playableGraph;
+            _playableGraph = PlayableGraph.Create("FPSAnimatorGraph");
 
             if (!_playableGraph.IsValid())
             {
@@ -94,6 +94,7 @@ namespace Kinemation.FPSFramework.Runtime.Core.Playables
             output.SetSourcePlayable(_masterMixer);
 
             _playableGraph.Play();
+            _animator.runtimeAnimatorController = null;
             return true;
         }
 
