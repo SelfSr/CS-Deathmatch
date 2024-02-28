@@ -52,10 +52,6 @@ namespace Demo.Scripts.Runtime
         [SerializeField] private AnimationCurve turnCurve = new AnimationCurve(new Keyframe(0f, 0f));
         [SerializeField] private float turnSpeed = 1f;
 
-        //[Header("Leaning")]
-        //[SerializeField] private float smoothLeanStep = 1f;
-        //[SerializeField, Range(0f, 1f)] private float startLean = 1f;
-
         [Header("Dynamic Motions")]
         [SerializeField] private IKAnimation aimMotionAsset;
         [SerializeField] private IKAnimation leanMotionAsset;
@@ -75,7 +71,6 @@ namespace Demo.Scripts.Runtime
         [SerializeField][HideInInspector] private LocomotionLayer locoLayer;
         [SerializeField][HideInInspector] private SlotLayer slotLayer;
         [SerializeField][HideInInspector] private WeaponCollision collisionLayer;
-        // Animation Layers
 
         [Header("General")]
         [Tab("Controller")]
@@ -102,7 +97,7 @@ namespace Demo.Scripts.Runtime
         [Tooltip("What objects should be hit")] public LayerMask hitLayer;
         [SerializeField] private GameObject groundImpactParticle, enemyImpactParticle, grassImpactParticle, metalImpactParticle;
         [SerializeField] private GameObject ImpactHole;
-        private AudioSource audioSource;
+        [SerializeField] private Crosshair crosshair;
         private float bulletDistance = 100;
         private RaycastHit hit;
 
@@ -136,7 +131,6 @@ namespace Demo.Scripts.Runtime
             InitAnimController();
 
             mainCameraComponent = mainCamera.GetComponent<Camera>();
-            audioSource = GetComponent<AudioSource>();
 
             animator = GetComponentInChildren<Animator>();
             lookLayer = GetComponentInChildren<LookLayer>();
@@ -266,10 +260,12 @@ namespace Demo.Scripts.Runtime
                 adsLayer.SetAds(true);
                 swayLayer.SetFreeAimEnable(false);
                 swayLayer.SetLayerAlpha(0.5f);
+                crosshair.enabled = false;
             }
             else
             {
                 DisableAim();
+                crosshair.enabled = true;
             }
 
             recoilComponent.isAiming = IsAiming();
@@ -284,19 +280,11 @@ namespace Demo.Scripts.Runtime
         {
             if (HasActiveAction()) return;
 
-            //if (resizeCrosshair && UIController.instance.crosshair != null)
-            //    UIController.instance.crosshair.Resize(weapon.crosshairResize * 100); изменение размера прицела
-
             GetGun().OnFire();
             PlayAnimation(GetGun().fireClip);
 
             Ray ray = mainCameraComponent.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0f));
             Debug.DrawRay(ray.origin, ray.direction * 100, Color.red);
-
-
-            //Debug.Log(GetGun().weaponAsset.BodyDamage);
-            //Debug.Log(GetGun().weaponAsset.HeadDamage);
-            //Debug.Log(GetGun().weaponAsset.LimbsDamage);
 
             Transform hitObj;
 
@@ -378,7 +366,6 @@ namespace Demo.Scripts.Runtime
                     impactBullet = Instantiate(ImpactHole, h.point, Quaternion.identity);
                     break;
                 case int l when l == LayerMask.NameToLayer("Damageable"):
-                    audioSource.Play();
                     impact = Instantiate(enemyImpactParticle, h.point, Quaternion.identity); // Enemy
                     impact.transform.rotation = Quaternion.LookRotation(h.normal);
                     break;

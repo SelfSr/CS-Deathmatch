@@ -5,21 +5,24 @@ using UnityEngine;
 public class PlayerHealth : Health
 {
     private Ragdoll ragdoll;
-    private FPSController FPSController;
-    private CoreAnimComponent CoreAnimComponent;
+    private FPSController fpsController;
+    private CoreAnimComponent coreAnimComponent;
+    private FPSMovement fpsMovement;
     [SerializeField] private GameObject weaponBone;
     protected override void OnStart()
     {
         ragdoll = GetComponent<Ragdoll>();
         ragdoll.DeactivateRagdoll();
-        FPSController = GetComponent<FPSController>();
-        CoreAnimComponent = GetComponent<CoreAnimComponent>();
+        fpsController = GetComponent<FPSController>();
+        fpsMovement = GetComponent<FPSMovement>();
+        coreAnimComponent = GetComponent<CoreAnimComponent>();
     }
     protected override void OnDeath(Vector3 force, Vector3 direction)
     {
         ragdoll.ActivateRagdoll();
-        FPSController.enabled = false;
-        CoreAnimComponent.enabled = false;
+        fpsController.enabled = false;
+        fpsMovement.enabled = false;
+        coreAnimComponent.enabled = false;
         weaponBone.gameObject.SetActive(false);
     }
     protected override void OnDamage(Vector3 force, Vector3 direction)
