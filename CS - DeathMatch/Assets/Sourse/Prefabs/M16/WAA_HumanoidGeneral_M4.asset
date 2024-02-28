@@ -138,4 +138,5 @@ MonoBehaviour:
   BodyDamage: 25
   headDamageMultiply: 2
   limbDamageMultiply: 0.5
+  force: 150
   distanceWallBane: 2
