@@ -8,14 +8,15 @@ public class AiIdleState : AiState
     {
         return AiStateId.Idle;
     }
-    public void Enter(Bot bot)
+    public void Enter(Ai_Bot bot)
     {
+        bot.aiWeapon.DeactivateWeapon();
     }
-    public void Update(Bot bot)
+    public void Update(Ai_Bot bot)
     {
         bot.navMeshAgent.speed = 0;
     }
-    public void Exit(Bot bot)
+    public void Exit(Ai_Bot bot)
     {
     }
 }

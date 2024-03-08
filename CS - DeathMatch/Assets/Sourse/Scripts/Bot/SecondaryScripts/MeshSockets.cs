@@ -6,6 +6,7 @@ public class MeshSockets : MonoBehaviour
     public enum SocketId
     {
         Spine,
+        RightLeg,
         RightHand
     }
 
@@ -15,10 +16,9 @@ public class MeshSockets : MonoBehaviour
     {
         MeshSocket[] sockets = GetComponentsInChildren<MeshSocket>();
         foreach (var socket in sockets)
-        {
             socketMap[socket.socketId] = socket;
-        }
     }
+
     public void Attach(Transform objectTransform, SocketId socketId)
     {
         socketMap[socketId].Attach(objectTransform);

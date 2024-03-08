@@ -9,18 +9,26 @@ public class AiDeathState : AiState
     {
         return AiStateId.Death;
     }
-    public void Enter(Bot bot)
+    public void Enter(Ai_Bot bot)
     {
-        bot.ragdoll.ActivateRagdoll();
-        bot.thisBotCollaider.enabled = false;
-        bot.aiWeapon.DisableWeapon();
-        bot.ragdoll.Hit(force, hitPosition);
         bot.navMeshAgent.speed = 0;
+
+        bot.aiWeapon.SetTarget(null);
+        bot.aiWeapon.SetFiring(false);
+        bot.ragdoll.ActivateRagdoll();
+        bot.aiWeapon.DisableWeapons();
+        bot.thisBotCollaider.enabled = false;
+
+        bot.sensor.enabled = false;
+
+        bot.navMeshAgent.ResetPath();
+
+        bot.ragdoll.Hit(force, hitPosition);
     }
-    public void Update(Bot bot)
+    public void Update(Ai_Bot bot)
     {
     }
-    public void Exit(Bot bot)
+    public void Exit(Ai_Bot bot)
     {
     }
 }

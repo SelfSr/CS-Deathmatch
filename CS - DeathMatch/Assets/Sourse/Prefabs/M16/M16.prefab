@@ -262,7 +262,7 @@ GameObject:
   - component: {fileID: 6475280890085250304}
   - component: {fileID: 61009574378967836}
   m_Layer: 0
-  m_Name: M16
+  m_Name: M16_MESH
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -6,13 +6,12 @@ public class MeshSocket : MonoBehaviour
     public HumanBodyBones bone;
     private Transform attachPoint;
 
-
     public Vector3 offset;
     public Vector3 rotation;
-    private void Start()
+    private void OnEnable()
     {
         Animator animator = GetComponentInParent<Animator>();
-        attachPoint = new GameObject("socket" + socketId).transform;
+        attachPoint = new GameObject("socket " + socketId).transform;
         attachPoint.SetParent(animator.GetBoneTransform(bone));
         attachPoint.localPosition = offset;
         attachPoint.localRotation = Quaternion.Euler(rotation);

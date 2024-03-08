@@ -61,5 +61,9 @@ namespace Kinemation.FPSFramework.Runtime.Core.Types
         [Header("WallBane")]
         [Range(0f, 5f)]
         public float distanceWallBane = 1;
+
+        [Header("Crosshair")]
+        [Range(1f, 1000f)]
+        public float crosshairSpread = 200;
     }
 }

@@ -2,10 +2,10 @@ using UnityEngine;
 
 public class AiHealth : Health
 {
-    private Bot mainBotScript;
+    private Ai_Bot mainBotScript;
     protected override void OnStart()
     {
-        mainBotScript = GetComponent<Bot>();
+        mainBotScript = GetComponent<Ai_Bot>();
     }
     protected override void OnDeath(Vector3 force, Vector3 direction)
     {

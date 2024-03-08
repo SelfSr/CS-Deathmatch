@@ -27,6 +27,6 @@ public class PlayerHealth : Health
     }
     protected override void OnDamage(Vector3 force, Vector3 direction)
     {
-
+       
     }
 }

@@ -3,10 +3,10 @@ using UnityEngine.Animations.Rigging;
 public class AiStateMachine
 {
     public AiState[] states;
-    public Bot Bot;
+    public Ai_Bot Bot;
     public AiStateId currentState;
 
-    public AiStateMachine(Bot bot)
+    public AiStateMachine(Ai_Bot bot)
     {
         this.Bot = bot;
         int numStates = System.Enum.GetNames(typeof(AiStateId)).Length;

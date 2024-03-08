@@ -111,7 +111,7 @@ namespace Demo.Scripts.Runtime
         private bool _freeLook;
 
         private FPSAimState aimState;
-        private FPSActionState actionState;
+        [HideInInspector] public FPSActionState actionState;
 
         private static readonly int Crouching = Animator.StringToHash("Crouching");
         private static readonly int OverlayType = Animator.StringToHash("OverlayType");
@@ -280,6 +280,8 @@ namespace Demo.Scripts.Runtime
         {
             if (HasActiveAction()) return;
 
+            if (UiManager.instance.crosshair != null) UiManager.instance.crosshair.Resize(GetGun().weaponAsset.crosshairSpread);
+
             GetGun().OnFire();
             PlayAnimation(GetGun().fireClip);
 
@@ -347,6 +349,7 @@ namespace Demo.Scripts.Runtime
 
         private void Hit(LayerMask layer, float damage, RaycastHit h, bool damageTarget)
         {
+
             GameObject impact = null, impactBullet = null;
 
             switch (layer)
@@ -368,6 +371,7 @@ namespace Demo.Scripts.Runtime
                 case int l when l == LayerMask.NameToLayer("Damageable"):
                     impact = Instantiate(enemyImpactParticle, h.point, Quaternion.identity); // Enemy
                     impact.transform.rotation = Quaternion.LookRotation(h.normal);
+                    UIEvents.onEnemyHit.Invoke();
                     break;
             }
 
@@ -494,6 +498,7 @@ namespace Demo.Scripts.Runtime
         {
             OnFireReleased();
             DisableAim();
+            crosshair.enabled = true;
 
             lookLayer.SetLayerAlpha(0.5f);
 
@@ -555,9 +560,9 @@ namespace Demo.Scripts.Runtime
 
             OnFireReleased();
 
+            actionState = FPSActionState.Reloading;
             PlayAnimation(reloadClip);
             GetGun().Reload();
-            actionState = FPSActionState.Reloading;
         }
 
         private void TryGrenadeThrow()
@@ -570,8 +575,6 @@ namespace Demo.Scripts.Runtime
             PlayAnimation(GetGun().grenadeClip);
             actionState = FPSActionState.Reloading;
         }
-
-        //private bool _isLeaning;
 
         private void ChangeWeapon_Internal(int newIndex)
         {
@@ -621,34 +624,10 @@ namespace Demo.Scripts.Runtime
                 TryReload();
             }
 
-            //if (Input.GetKeyDown(KeyCode.G))
-            //{
-            //    TryGrenadeThrow();
-            //}
-
             HandleWeaponChangeInput();
 
             if (aimState != FPSAimState.Ready)
             {
-                //bool wasLeaning = _isLeaning;
-
-                //bool rightLean = Input.GetKey(KeyCode.E);
-                //bool leftLean = Input.GetKey(KeyCode.Q);
-
-                //_isLeaning = rightLean || leftLean;
-
-                //if (_isLeaning != wasLeaning)
-                //{
-                //    slotLayer.PlayMotion(leanMotionAsset);
-                //    charAnimData.SetLeanInput(wasLeaning ? 0f : rightLean ? -startLean : startLean);
-                //}
-
-                //if (_isLeaning)
-                //{
-                //    float leanValue = Input.GetAxis("Mouse ScrollWheel") * smoothLeanStep;
-                //    charAnimData.AddLeanInput(leanValue);
-                //}
-
                 if (Input.GetKeyDown(KeyCode.Mouse0))
                 {
                     OnFirePressed();
@@ -664,10 +643,6 @@ namespace Demo.Scripts.Runtime
                     ToggleAim();
                 }
 
-                //if (Input.GetKeyDown(KeyCode.V))
-                //{
-                //    ChangeScope();
-                //}
 
                 if (Input.GetKeyDown(KeyCode.Q) && IsAiming())
                 {
@@ -675,29 +650,16 @@ namespace Demo.Scripts.Runtime
                     {
                         adsLayer.SetPointAim(false);
                         aimState = FPSAimState.Aiming;
+                        crosshair.enabled = false;
                     }
                     else
                     {
                         adsLayer.SetPointAim(true);
                         aimState = FPSAimState.PointAiming;
+                        crosshair.enabled = true;
                     }
                 }
             }
-
-            //if (Input.GetKeyDown(KeyCode.H))
-            //{
-            //    if (aimState == FPSAimState.Ready)
-            //    {
-            //        aimState = FPSAimState.None;
-            //        lookLayer.SetLayerAlpha(1f);
-            //    }
-            //    else
-            //    {
-            //        aimState = FPSAimState.Ready;
-            //        lookLayer.SetLayerAlpha(.5f);
-            //        OnFireReleased();
-            //    }
-            //}
         }
 
         private Quaternion desiredRotation;
@@ -754,19 +716,6 @@ namespace Demo.Scripts.Runtime
 
             float deltaMouseX = Input.GetAxis("Mouse X") * sensitivity;
             float deltaMouseY = -Input.GetAxis("Mouse Y") * sensitivity;
-
-            //if (_freeLook)
-            //{
-            //    // No input for both controller and animation component. We only want to rotate the camera
-
-            //    _freeLookInput.x += deltaMouseX;
-            //    _freeLookInput.y += deltaMouseY;
-
-            //    _freeLookInput.x = Mathf.Clamp(_freeLookInput.x, -freeLookAngle.x, freeLookAngle.x);
-            //    _freeLookInput.y = Mathf.Clamp(_freeLookInput.y, -freeLookAngle.y, freeLookAngle.y);
-
-            //    return;
-            //}
 
             _freeLookInput = Vector2.Lerp(_freeLookInput, Vector2.zero,
                 FPSAnimLib.ExpDecayAlpha(15f, Time.deltaTime));
@@ -845,8 +794,6 @@ namespace Demo.Scripts.Runtime
 
         private void Update()
         {
-            //Ray ray = mainCameraComponent.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0f));
-            //Debug.DrawRay(ray.origin, ray.direction * 100, Color.green);
 
             Time.timeScale = timeScale;
             if (Input.GetKeyDown(KeyCode.Escape))

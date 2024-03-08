@@ -17,10 +17,10 @@ TagManager:
   - Water
   - UI
   - Ground
-  - Enemy
+  - Character
   - Metal
   - Grass
-  - Player
+  - Enemy
   - Damageable
   - 
   - 

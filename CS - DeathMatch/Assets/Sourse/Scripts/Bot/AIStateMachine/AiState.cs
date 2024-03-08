@@ -3,12 +3,13 @@ public enum AiStateId
     Idle,
     WanderingMap,
     Death,
-    AttackEnemy
+    AttackTarget,
+    FindTarget
 }
 public interface AiState
 {
     AiStateId GetId();
-    void Enter(Bot bot);
-    void Update(Bot bot);
-    void Exit(Bot bot);
+    void Enter(Ai_Bot bot);
+    void Update(Ai_Bot bot);
+    void Exit(Ai_Bot bot);
 }

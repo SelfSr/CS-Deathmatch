@@ -7,11 +7,13 @@ public class AiWanderingMapState : AiState
     {
         return AiStateId.WanderingMap;
     }
-    public void Enter(Bot bot)
+
+    public void Enter(Ai_Bot bot)
     {
 
     }
-    public void Update(Bot bot)
+
+    public void Update(Ai_Bot bot)
     {
         if (!bot.navMeshAgent.pathPending && bot.navMeshAgent.remainingDistance < 0.3f)
         {
@@ -19,7 +21,7 @@ public class AiWanderingMapState : AiState
             while (!getCorrectPoint)
             {
                 NavMeshHit hit;
-                NavMesh.SamplePosition(Random.insideUnitSphere * bot.botConfig.searchRadius + bot.transform.position, out hit, bot.botConfig.searchRadius, NavMesh.AllAreas);
+                NavMesh.SamplePosition(Random.insideUnitSphere * bot.searchRadius + bot.transform.position, out hit, bot.searchRadius, NavMesh.AllAreas);
                 bot.randomPoint = hit.position;
 
                 bot.navMeshAgent.CalculatePath(bot.randomPoint, bot.navMeshPath);
@@ -30,7 +32,8 @@ public class AiWanderingMapState : AiState
             bot.navMeshAgent.SetDestination(bot.randomPoint);
         }
     }
-    public void Exit(Bot bot)
+
+    public void Exit(Ai_Bot bot)
     {
     }
 }

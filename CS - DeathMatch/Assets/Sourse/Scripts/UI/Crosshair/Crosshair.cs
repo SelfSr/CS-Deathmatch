@@ -1,6 +1,3 @@
-using Demo.Scripts.Runtime;
-using System.Drawing;
-using UnityEditor.Presets;
 using UnityEngine;
 
 [System.Serializable]
@@ -10,20 +7,22 @@ public class Parts
 }
 public class Crosshair : MonoBehaviour
 {
-    [SerializeField] private Preset defaultPreset;
     [SerializeField] private UiManager uiManager;
     [SerializeField, Range(1f, 100f)] private float size = 10f;
     [SerializeField, Range(1f, 25f)] private float width = 2f;
-    [SerializeField, Range(0f, 100f)] private float spread = 20f;
+    [SerializeField, Range(0f, 100f)] private float defaultSpread = 20f;
+    private float resizeSpeed = 3;
+    private float spread;
 
     private UnityEngine.Color color = UnityEngine.Color.white;
     [SerializeField] private UnityEngine.Color defaultColor = UnityEngine.Color.green;
     [SerializeField] private UnityEngine.Color enemySpottedColor = UnityEngine.Color.red;
 
+    [SerializeField] private bool resizeCrosshair = true;
     [SerializeField] private bool hideCrosshairOnPaused;
 
     [SerializeField] private bool hitmarker;
-    [SerializeField] private GameObject hitmarkerObj;
+    public GameObject hitmarkerObj;
 
     RaycastHit hit;
 
@@ -34,7 +33,10 @@ public class Crosshair : MonoBehaviour
     }
     public Parts parts;
 
-    private void Awake() => Utilities.ApplyPreset(defaultPreset, this);
+    private void Start()
+    {
+        spread = defaultSpread;
+    }
 
     private void Update()
     {
@@ -42,7 +44,18 @@ public class Crosshair : MonoBehaviour
             color = enemySpottedColor;
         else
             color = defaultColor;
+
+        if (spread != defaultSpread)
+        {
+            defaultSpread = Mathf.Lerp(defaultSpread, spread, resizeSpeed * Time.deltaTime);
+        }
     }
+    public void Resize(float newSize)
+    {
+        if (defaultSpread <= 1000 && resizeCrosshair)
+            defaultSpread = Mathf.Lerp(defaultSpread, newSize, resizeSpeed * 5 * Time.deltaTime);
+    }
+
     private void OnGUI()
     {
         Texture2D texture = new Texture2D(1, 1);
@@ -50,10 +63,10 @@ public class Crosshair : MonoBehaviour
         texture.wrapMode = TextureWrapMode.Repeat;
         texture.Apply();
 
-        if (parts.downPart) GUI.DrawTexture(new Rect(Screen.width / 2 - width / 2, (Screen.height / 2 - size / 2) + spread / 2, width, size), texture);
-        if (parts.topPart) GUI.DrawTexture(new Rect(Screen.width / 2 - width / 2, (Screen.height / 2 - size / 2) - spread / 2, width, size), texture);
-        if (parts.rightPart) GUI.DrawTexture(new Rect((Screen.width / 2 - size / 2) + spread / 2, Screen.height / 2 - width / 2, size, width), texture);
-        if (parts.leftPart) GUI.DrawTexture(new Rect((Screen.width / 2 - size / 2) - spread / 2, Screen.height / 2 - width / 2, size, width), texture);
+        if (parts.downPart) GUI.DrawTexture(new Rect(Screen.width / 2 - width / 2, (Screen.height / 2 - size / 2) + defaultSpread / 2, width, size), texture);
+        if (parts.topPart) GUI.DrawTexture(new Rect(Screen.width / 2 - width / 2, (Screen.height / 2 - size / 2) - defaultSpread / 2, width, size), texture);
+        if (parts.rightPart) GUI.DrawTexture(new Rect((Screen.width / 2 - size / 2) + defaultSpread / 2, Screen.height / 2 - width / 2, size, width), texture);
+        if (parts.leftPart) GUI.DrawTexture(new Rect((Screen.width / 2 - size / 2) - defaultSpread / 2, Screen.height / 2 - width / 2, size, width), texture);
         if (parts.center)
         {
             float radius = Mathf.Min(width, size) / 2;

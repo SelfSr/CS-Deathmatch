@@ -3,9 +3,10 @@
 using Kinemation.FPSFramework.Runtime.Camera;
 using Kinemation.FPSFramework.Runtime.Core.Types;
 using Kinemation.FPSFramework.Runtime.FPSAnimator;
-
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static AiWeapon;
 
 namespace Demo.Scripts.Runtime
 {
@@ -18,6 +19,8 @@ namespace Demo.Scripts.Runtime
     [RequireComponent(typeof(AudioSource))]
     public class Weapon : FPSAnimWeapon
     {
+        private FPSController fpsController;
+
         [Header("Animations")]
         public AnimSequence reloadClip;
         public AnimSequence grenadeClip;
@@ -41,6 +44,10 @@ namespace Demo.Scripts.Runtime
         private Animator _animator;
         private int _scopeIndex;
 
+        private void Awake()
+        {
+            fpsController = GetComponentInParent<FPSController>();
+        }
         protected void Start()
         {
             _animator = GetComponentInChildren<Animator>();
@@ -71,10 +78,20 @@ namespace Demo.Scripts.Runtime
         {
             if (_animator == null && audioSource == null)
                 return;
-
+            StartCoroutine(ReloadWeaponAnimation());
+        }
+        IEnumerator ReloadWeaponAnimation()
+        {
             audioSource.PlayOneShot(reload);
             _animator.Rebind();
             _animator.Play("Reload", 0);
+
+            yield return new WaitForSeconds(0.5f);
+            while (_animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1.0f)
+                yield return null;
+            yield return new WaitForSeconds(0.5f);
+
+            fpsController.ResetActionState();
         }
     }
 }

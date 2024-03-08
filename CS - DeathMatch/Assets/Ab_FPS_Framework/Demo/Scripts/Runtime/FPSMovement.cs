@@ -27,6 +27,7 @@ namespace Demo.Scripts.Runtime
         public delegate bool ConditionDelegate();
 
         [SerializeField] private FPSMovementSettings movementSettings;
+        [SerializeField] private FPSController fpsController;
         [SerializeField] public Transform rootBone;
 
         [SerializeField] public UnityEvent onStartMoving;
@@ -53,6 +54,7 @@ namespace Demo.Scripts.Runtime
 
         public FPSMovementState MovementState { get; private set; }
         public FPSPoseState PoseState { get; private set; }
+        public FPSActionState actionState { get; private set; }
 
         public Vector2 AnimatorVelocity { get; private set; }
 
@@ -119,7 +121,7 @@ namespace Demo.Scripts.Runtime
 
         private bool TryJump()
         {
-            if (!Input.GetKeyDown(movementSettings.jumpKey) /*|| PoseState == FPSPoseState.Crouching*/)
+            if (!Input.GetKeyDown(movementSettings.jumpKey))
             {
                 return false;
             }
@@ -136,25 +138,18 @@ namespace Demo.Scripts.Runtime
 
         private bool TrySprint()
         {
-            if (PoseState is FPSPoseState.Crouching or FPSPoseState.Prone)
+            if (PoseState is FPSPoseState.Crouching)
             {
                 return false;
             }
-
+            if (fpsController.actionState == FPSActionState.Reloading)
+            {
+                return false;
+            }
             if (_inputDirection.y <= 0f || _inputDirection.x != 0f || !Input.GetKey(movementSettings.sprintKey))
             {
                 return false;
             }
-
-            if (Input.GetKey(movementSettings.slideKey) && GetSpeedRatio() > 0.5f)
-            {
-                if (!CanSlide()) return false;
-
-                MovementState = FPSMovementState.Sliding;
-                return true;
-            }
-
-            if (!CanSprint()) return false;
 
             MovementState = FPSMovementState.Sprinting;
             return true;

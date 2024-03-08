@@ -18,15 +18,16 @@ public class SoundManager : MonoBehaviour
         src = GetComponent<AudioSource>();
     }
 
-    public void PlaySound(AudioClip clip, float delay, float pitch, bool randomPitch, float spatialBlend)
+    public void PlaySound(AudioClip clip, float delay, float pitch, bool randomPitch, float spatialBlend, float volume)
     {
-        StartCoroutine(Play(clip, delay, pitch, randomPitch, spatialBlend));
+        StartCoroutine(Play(clip, delay, pitch, randomPitch, spatialBlend, volume));
     }
 
-    private IEnumerator Play(AudioClip clip, float delay, float pitch, bool randomPitch, float spatialBlend)
+    private IEnumerator Play(AudioClip clip, float delay, float pitch, bool randomPitch, float spatialBlend, float volume)
     {
         yield return new WaitForSeconds(delay);
         src.spatialBlend = spatialBlend;
+        src.volume = volume;
         float pitchAdded = randomPitch ? Random.Range(-pitch, pitch) : pitch;
         src.pitch = 1 + pitchAdded;
         src.PlayOneShot(clip);

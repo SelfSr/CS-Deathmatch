@@ -127,11 +127,11 @@ MonoBehaviour:
     translationDampingFactor: 0
     rotationDampingFactor: 0
   blockData:
-    weaponLength: 1.25
-    startOffset: 0.4
+    weaponLength: 0.6
+    startOffset: 0
     threshold: 0.1
     restPose:
-      position: {x: -0.05, y: -0.09, z: -0.03}
+      position: {x: 0, y: -0.09, z: -0.03}
       rotation: {x: -0.22627231, y: 0.18844119, z: -0.091121025, w: -0.9513084}
   adsRecoilOffset: {x: 0, y: -0.05, z: -0.03}
   adsSwayOffset: {x: 0, y: -0.05, z: -0.3}
@@ -140,3 +140,4 @@ MonoBehaviour:
   limbDamageMultiply: 0.5
   force: 150
   distanceWallBane: 2
+  crosshairSpread: 200
